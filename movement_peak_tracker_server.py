@@ -1,5 +1,6 @@
 import cv2
-from statistics import median
+from statistics import median, mean
+import time
 
 def main():
     #input_number = select_input()
@@ -10,13 +11,24 @@ def main():
 #display movement tracking on a video using opencv
 def show_movement_tracking(video_number):
     frame_count = 0
+    #array of 100 frame times
+    frame_times = [1] * 100
     # Open the Video
     video = cv2.VideoCapture(video_number)
 
     # read the fiurst frame  of the video as the initial background image
     ret, Prev_frame = video.read()
 
+
+    # get the start time of each frame
+    start_time = time.time()
     while (video.isOpened()):
+        new_time = time.time()
+        time_diff = new_time - start_time
+        frame_times[frame_count % 100] = time_diff
+        #calculate the average frame time
+        fps = 1 / mean(frame_times)
+        start_time = new_time
 
         frame_count += 1
 
@@ -58,11 +70,6 @@ def show_movement_tracking(video_number):
             x_list.append(x + w)
             y_list.append(y + h)
 
-        y_center = int(sum(y_list) / len(y_list))
-        x_center = int(sum(x_list) / len(x_list))
-
-        x_median = median(x_list)
-        y_median = median(y_list)
 
 
         # loop over the contours
@@ -73,17 +80,24 @@ def show_movement_tracking(video_number):
             motion += 1
             cv2.putText(Prev_frame, f'person {motion} area {cv2.contourArea(cnt)}', (x, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        if len(x_list) > 0 and len(y_list) > 0:
+            y_center = int(sum(y_list) / len(y_list))
+            x_center = int(sum(x_list) / len(x_list))
 
-        # put a small blue recangle at position y_center and x_center
-        cv2.rectangle(Prev_frame, (x_center - 10, y_center - 10), (x_center + 10, y_center + 10), (255, 0, 0), 2)
+            x_median = int(median(x_list))
+            y_median = int(median(y_list))
 
-        #put a small red recangle at position x_median and y_median
-        #cv2.rectangle(Prev_frame, (x_median - 10, y_median - 10), (x_median + 10, y_median + 10), (0, 0, 255), 2)
+            # put a small blue recangle at position y_center and x_center
+            cv2.rectangle(Prev_frame, (x_center - 10, y_center - 10), (x_center + 10, y_center + 10), (255, 0, 0), 2)
+
+            #put a small red recangle at position x_median and y_median
+            cv2.rectangle(Prev_frame, (x_median - 10, y_median - 10), (x_median + 10, y_median + 10), (0, 0, 255), 2)
+
+
+        # print the text of "start_time" on lower left corner of the frame
+        cv2.putText(Prev_frame, f'fps:{fps}', (10, Prev_frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
         # Display the resulting frame
-
-        #cv2.line(Prev_frame, (0, 150), (840, 150), (0, 0, 255), 4)
-        #cv2.line(Prev_frame, (0, 350), (840, 350), (0, 0, 255), 4)
         cv2.imshow("feed", Prev_frame)
         #cv2.imwrite("frame%d.jpg" % frame_count, Prev_frame)
 
@@ -91,7 +105,7 @@ def show_movement_tracking(video_number):
 
         if ret == False:
             break
-        if cv2.waitKey(100) == ord('q'):
+        if cv2.waitKey(50) == ord('q'):
             break
 
     video.release()
