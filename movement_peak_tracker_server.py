@@ -3,8 +3,8 @@ from statistics import median, mean
 import time
 
 def main():
-    #input_number = select_input()
-    input_number = 1
+    input_number = select_input()
+    #input_number = 1
     #show_video(input_number)
     show_movement_tracking(input_number)
 
@@ -16,7 +16,7 @@ def show_movement_tracking(video_number):
     # Open the Video
     video = cv2.VideoCapture(video_number)
 
-    # read the fiurst frame  of the video as the initial background image
+    # read the first frame  of the video as the initial background image
     ret, Prev_frame = video.read()
 
 
@@ -156,11 +156,15 @@ def show_video(video_number):
 def select_input():
     # build a list of available video capture devices
     devices = []
-    for i in range(0, 10):
+    for i in range(0, 5):
         cap = cv2.VideoCapture(i)
         if cap.isOpened():
             devices.append(i)
             cap.release()
+
+    if len(devices)==1:
+        print("Only one device found")
+        return devices[0]
 
     # prompt the user to select a device
     print("Available video capture devices:")
